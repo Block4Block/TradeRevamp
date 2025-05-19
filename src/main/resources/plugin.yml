@@ -1,0 +1,14 @@
+name: TradeRevamp
+main: hasjamon.block4block.TradeRevamp
+api-version: 1.21
+authors: [HasJamOn, Bahm]
+version: 1.0
+description: Revamps villager trading to static trades fit for servers running Block4Block.
+commands:
+  trevamp:
+    description: Reloads the trade revamp plugin config
+    usage: /trevamp reload
+permissions:
+  trevamp.reload:
+    description: Allows reloading the plugin config
+    default: op
