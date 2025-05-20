@@ -40,52 +40,40 @@ public class TradeRevamp extends JavaPlugin implements Listener, CommandExecutor
     @EventHandler
     public void onRepopulate(VillagerReplenishTradeEvent event) {
         if (event.getEntity() instanceof Villager villager) {
-            villager.setRecipes(TradeManager.getTradesFor(villager.getProfession(), villager.getVillagerLevel()));
-        }
-    }
+            // 1) Stop Paper from mutating its own list under you
+            event.setCancelled(true);
 
-    @EventHandler
-    public void onAcquire(VillagerAcquireTradeEvent event) {
-        if (event.getEntity() instanceof Villager villager) {
-
-            // 1) Get the vanilla list of recipes (in order)
-            List<MerchantRecipe> vanilla = villager.getRecipes();
-
-            // 2) Find which slot/index the player clicked
-            int slot = vanilla.indexOf(event.getRecipe());
-            if (slot == -1) return;  // safety check
-
-            // 3) Load your custom list
+            // 2) Grab your fresh trades
             List<MerchantRecipe> custom = TradeManager.getTradesFor(
                     villager.getProfession(),
-                    villager.getVillagerLevel()
+                    villager.getVillagerLevel(),
+                    villager.getLocation()
             );
 
-            // 4) If you have a replacement for that slot, swap it in
-            if (slot < custom.size()) {
-                event.setRecipe(custom.get(slot));
-            }
+            // 3) Swap them in *next tick* on the main thread
+            Bukkit.getScheduler().runTask(this, () -> {
+                villager.setRecipes(custom);
+            });
         }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onVillagerSpawn(CreatureSpawnEvent e) {
-        if (e.getEntityType() != EntityType.VILLAGER) return;
-        Villager v = (Villager)e.getEntity();
-
-        // schedule for next tick
-        Bukkit.getScheduler().runTask(this, () -> {
-            v.setRecipes(TradeManager.getTradesFor(v.getProfession(), v.getVillagerLevel()));
-        });
     }
 
     @EventHandler
     public void onCareerChange(VillagerCareerChangeEvent e) {
         if (e.getReason() == VillagerCareerChangeEvent.ChangeReason.EMPLOYED) {
             Villager v = e.getEntity();
-            Bukkit.getScheduler().runTask(this, () -> {
-                v.setRecipes(TradeManager.getTradesFor(e.getProfession(), v.getVillagerLevel()));
-            });
+            Bukkit.getScheduler().runTask(this, () ->
+                    v.setRecipes(TradeManager.getTradesFor(v.getProfession(), v.getVillagerLevel(),v.getLocation()))
+            );
+        }
+    }
+
+    @EventHandler
+    public void onVillagerSpawn(CreatureSpawnEvent e) {
+        if (e.getEntityType() == EntityType.VILLAGER) {
+            Villager v = (Villager)e.getEntity();
+            Bukkit.getScheduler().runTask(this, () ->
+                    v.setRecipes(TradeManager.getTradesFor(v.getProfession(), v.getVillagerLevel(),v.getLocation()))
+            );
         }
     }
 }
