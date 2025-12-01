@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>hasjamon.block4block</groupId>
-    <artifactId>TradeRevamp</artifactId>
+    <artifactId>StaticTrades</artifactId>
     <version>1.0</version>
 
     <properties>
